@@ -1,0 +1,18 @@
+# Drone Detection and Tracking System - Phase 1 Requirements
+
+# Core Machine Learning & Object Detection
+ultralytics>=8.0.0            # YOLOv8 / YOLO11 training and inference engine
+torch>=2.0.0                  # PyTorch deep learning framework (CUDA compatible)
+torchvision>=0.15.0            # Image transforms and utility functions for PyTorch
+
+# Computer Vision & Image Processing
+opencv-python>=4.7.0          # OpenCV for image/video capture, processing, and rendering
+sahi>=0.11.0                  # Slicing Aided Hyper Inference (SAHI) for small object/drone detection
+
+# Tracking Support
+lapx>=0.5.2                   # Linear Assignment Problem solver (lap/lapx) for tracker matching (e.g., ByteTrack)
+
+# Data Manipulation & Utilities
+pyyaml>=6.0                   # Configuration management
+numpy>=1.23.0                 # Numerical array computations
+pandas>=1.5.0                 # Structured data analysis and logs processing

@@ -1,0 +1,19 @@
+# Drone Detection and Tracking System Configuration
+# Cross-platform safe configuration settings
+
+# Dataset configuration
+# path to dataset YAML containing train/val/test splits and class names
+data_yaml_path: "drone_dataset/data.yaml"
+
+# Model hyperparameters
+model_type: "yolov8m.pt"          # Pre-trained base weights (yolov8s.pt, yolov8m.pt, etc.)
+epochs: 50                       # Number of training epochs
+imgsz: 640                       # Input image size (must be divisible by 32)
+batch_size: 16                   # Training batch size (use -1 for auto-batching)
+
+# Hardware and environment configurations
+device: 0                        # Device index (0, 1... for GPU, or "cpu")
+
+# Output and logging directories
+project_dir: "runs/detect"       # Project folder where training run results are saved
+name: "drone_model_exp"          # Subdirectory name under project_dir for this experiment
