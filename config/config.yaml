@@ -49,4 +49,29 @@ tracking:
   draw_trail: true               # Draw movement trajectory lines
   trail_length: 30
 
+# Snapshot capturing configuration
+snapshot:
+  enabled: true
+  min_confidence: 0.80           # Save snapshot only if confidence >= 80%
+  save_dir: "captures"           # Base capture directory
+  debounce_seconds: 5.0          # Minimum seconds between snapshots for the SAME track_id
+  draw_boxes_on_snapshot: true   # Whether saved JPEG should have bbox annotated
+
+# Event audit logging configuration
+logging:
+  enabled: true
+  log_dir: "logs"                # Base log directory
+  log_format: "jsonl"            # "jsonl" or "text"
+  log_level: "INFO"
+
+# Geofencing/Restricted zones configuration
+geofencing:
+  enabled: true
+  zones:
+    - name: "Restricted_Zone_1"
+      # Normalized coordinates (0.0 to 1.0 relative to frame width/height)
+      polygon: [[0.2, 0.2], [0.8, 0.2], [0.8, 0.8], [0.2, 0.8]]
+      color: [0, 0, 255]          # Red BGR
+
+
 
