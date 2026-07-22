@@ -3,7 +3,7 @@
 
 # Dataset configuration
 # path to dataset YAML containing train/val/test splits and class names
-data_yaml_path: "drone_dataset/data.yaml"
+data_yaml_path: "dataset/data.yaml"
 
 # Model hyperparameters
 model_type: "yolov8m.pt"          # Pre-trained base weights (yolov8s.pt, yolov8m.pt, etc.)
