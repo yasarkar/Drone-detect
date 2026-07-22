@@ -6,6 +6,7 @@ from pathlib import Path
 import cv2
 import yaml
 from src.core.detector import DroneDetector
+from src.core.tracker import DroneTracker
 
 # Configure script logging
 logging.basicConfig(
@@ -19,7 +20,7 @@ def parse_arguments() -> argparse.Namespace:
     """
     Parses command line arguments for the inference test script.
     """
-    parser = argparse.ArgumentParser(description="Test Inference for Drone Detector System.")
+    parser = argparse.ArgumentParser(description="Test Inference for Drone Detector and Tracker System.")
     parser.add_argument(
         "--config",
         type=str,
@@ -60,6 +61,7 @@ def main():
     else:
         source = source_raw
 
+    # Initialize Detector
     logger.info(f"Initializing DroneDetector with config: {config_path}")
     try:
         detector = DroneDetector(config_path)
@@ -71,6 +73,21 @@ def main():
         logger.error(f"Failed to initialize DroneDetector: {e}")
         sys.exit(1)
 
+    # Initialize Tracker if enabled
+    tracker = None
+    tracking_config = config.get("tracking", {})
+    tracking_enabled = tracking_config.get("enabled", True)
+
+    if tracking_enabled:
+        logger.info("Initializing DroneTracker...")
+        try:
+            tracker = DroneTracker(config_path)
+        except Exception as e:
+            logger.error(f"Failed to initialize DroneTracker: {e}")
+            sys.exit(1)
+    else:
+        logger.info("Tracking is disabled in configuration.")
+
     # 3. Setup video capture
     logger.info(f"Opening video/stream source: {source}")
     cap = cv2.VideoCapture(source)
@@ -78,7 +95,7 @@ def main():
         logger.error(f"Could not open source: {source}")
         sys.exit(1)
 
-    window_name = "Drone Detector Real-time Test"
+    window_name = "Drone Detector & Tracker Real-time Test"
     logger.info("Press 'q' in the display window to exit.")
 
     # Time tracking for FPS calculation
@@ -96,8 +113,14 @@ def main():
             # 4. Perform detection
             detections = detector.detect(frame)
 
-            # 5. Draw detections onto a copy of the frame
-            annotated_frame = detector.draw_detections(frame, detections)
+            # 5. Run tracking and annotation
+            if tracker is not None:
+                tracked_dets = tracker.update(detections, frame)
+                annotated_frame = tracker.draw_tracks(frame, tracked_dets)
+                count = len(tracked_dets)
+            else:
+                annotated_frame = detector.draw_detections(frame, detections)
+                count = len(detections)
 
             # 6. Calculate real-time FPS
             curr_time = time.time()
@@ -111,21 +134,53 @@ def main():
                 else:
                     fps_smoothed = (alpha * fps_smoothed) + ((1.0 - alpha) * fps_instant)
 
-            # 7. Render FPS on the top-left of the output frame
+            # 7. Render overlays (FPS, SAHI and Tracking statuses) on top-left
+            # Render FPS
             fps_text = f"FPS: {fps_smoothed:.1f}"
             cv2.putText(
                 annotated_frame,
                 fps_text,
                 (15, 35),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                1.0,
-                (0, 0, 255),  # BGR Red
+                0.9,
+                (0, 0, 255),  # Red
                 2,
                 cv2.LINE_AA
             )
 
-            # Log detection counts to console
-            logger.info(f"Detections: {len(detections)} drone(s) found at {fps_smoothed:.1f} FPS")
+            # Render SAHI status
+            sahi_text = f"SAHI: {'ON' if detector.sahi_enabled else 'OFF'}"
+            sahi_color = (0, 255, 0) if detector.sahi_enabled else (0, 0, 255)
+            cv2.putText(
+                annotated_frame,
+                sahi_text,
+                (15, 65),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                sahi_color,
+                2,
+                cv2.LINE_AA
+            )
+
+            # Render Tracker status
+            track_text = f"TRACK: {'ON' if tracker is not None else 'OFF'}"
+            track_color = (0, 255, 0) if tracker is not None else (0, 0, 255)
+            cv2.putText(
+                annotated_frame,
+                track_text,
+                (15, 95),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                track_color,
+                2,
+                cv2.LINE_AA
+            )
+
+            # Log frame statistics
+            logger.info(
+                f"Status: SAHI={detector.sahi_enabled}, Track={tracker is not None} | "
+                f"Active Targets: {count} | Speed: {fps_smoothed:.1f} FPS"
+            )
 
             # 8. Display real-time result window
             try:
@@ -136,7 +191,6 @@ def main():
                     break
             except cv2.error as cv_err:
                 logger.warning(f"Display window could not be initialized (headless mode?): {cv_err}")
-                # In headless modes (CI/CD environments), print details without blocking
                 time.sleep(0.01)
 
     except KeyboardInterrupt:
