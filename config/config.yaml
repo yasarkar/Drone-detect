@@ -29,3 +29,24 @@ visuals:
   bbox_thickness: 2
   font_scale: 0.6
 
+# SAHI (Slicing Aided Hyper Inference) settings
+sahi:
+  enabled: true                  # Toggle SAHI on/off
+  slice_height: 512
+  slice_width: 512
+  overlap_height_ratio: 0.2
+  overlap_width_ratio: 0.2
+  postprocess_type: "NMS"
+  postprocess_match_threshold: 0.5
+
+# Tracking settings
+tracking:
+  enabled: true                  # Toggle tracking on/off
+  tracker_type: "bytetrack"      # Default ByteTrack support
+  track_thresh: 0.5
+  track_buffer: 30
+  match_thresh: 0.8
+  draw_trail: true               # Draw movement trajectory lines
+  trail_length: 30
+
+
