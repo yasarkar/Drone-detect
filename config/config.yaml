@@ -17,3 +17,15 @@ device: 0                        # Device index (0, 1... for GPU, or "cpu")
 # Output and logging directories
 project_dir: "runs/detect"       # Project folder where training run results are saved
 name: "drone_model_exp"          # Subdirectory name under project_dir for this experiment
+
+# Inference configuration
+weights_path: "weights/best.pt"  # Path to the trained YOLO weights
+confidence_threshold: 0.50       # Confidence threshold for detections
+iou_threshold: 0.45              # Intersection over Union (IoU) threshold for NMS
+
+# Visualization settings
+visuals:
+  bbox_color: [0, 255, 0]        # BGR Green
+  bbox_thickness: 2
+  font_scale: 0.6
+
