@@ -254,13 +254,31 @@ def main():
 
     # 4. Setup video capture
     logger.info(f"Opening video/stream source: {source}")
-    cap = cv2.VideoCapture(source)
+    if isinstance(source, int):
+        if sys.platform.startswith("win"):
+            cap = cv2.VideoCapture(source, cv2.CAP_DSHOW)
+        else:
+            cap = cv2.VideoCapture(source)
+        
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        cap.set(cv2.CAP_PROP_FPS, 60.0)
+    else:
+        cap = cv2.VideoCapture(source)
+
     if not cap.isOpened():
         logger.error(f"Could not open source: {source}")
         sys.exit(1)
 
     window_name = "Drone Detection, Tracking & Geofencing System"
     logger.info("Press 'q' in the display window to exit.")
+    try:
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+        cv2.setWindowProperty(window_name, cv2.WND_PROP_ASPECT_RATIO, cv2.WINDOW_KEEPRATIO)
+        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    except Exception as e:
+        logger.warning(f"Could not set window to fullscreen: {e}")
 
     # Time tracking for FPS calculation
     prev_time = time.time()
