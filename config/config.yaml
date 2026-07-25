@@ -46,7 +46,7 @@ tracking:
   track_thresh: 0.5
   track_buffer: 30
   match_thresh: 0.8
-  draw_trail: true               # Draw movement trajectory lines
+  draw_trail: false              # Disable blue movement trajectory lines
   trail_length: 30
 
 # Snapshot capturing configuration
