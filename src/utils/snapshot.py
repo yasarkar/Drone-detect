@@ -11,18 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class SnapshotManager:
-    """
-    Manages structured, debounced capturing of detected drone images.
-    Organizes saved snapshots in date-based subdirectories and handles bounding box overlays.
-    """
-
     def __init__(self, config_path: str | Path):
-        """
-        Initializes the SnapshotManager with settings from config.yaml.
-
-        Args:
-            config_path: Path to the configuration YAML file.
-        """
         self.config_path = Path(config_path)
         if not self.config_path.exists():
             logger.error(f"Configuration file not found at: {self.config_path}")
@@ -60,19 +49,6 @@ class SnapshotManager:
         bbox: list[int] | None = None,
         class_name: str = "drone"
     ) -> Path | None:
-        """
-        Saves a debounced JPEG snapshot of the drone event if requirements are met.
-
-        Args:
-            frame: Raw BGR input frame.
-            track_id: Unique tracking identifier.
-            confidence: Detection confidence.
-            bbox: Bounding box [x1, y1, x2, y2]. Required if draw_boxes_on_snapshot is True.
-            class_name: Label class name.
-
-        Returns:
-            Path to the saved image file, or None if snapshot was skipped/failed.
-        """
         if not self.enabled:
             return None
 

@@ -11,19 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class DroneDetector:
-    """
-    A modular object detector for detecting drones using YOLOv8 models.
-    Supports GPU-accelerated inference, SAHI sliced inference for small objects,
-    and custom visualization options.
-    """
-
     def __init__(self, config_path: str | Path):
-        """
-        Initializes the DroneDetector with parameters loaded from config.yaml.
-
-        Args:
-            config_path: Path to the configuration YAML file.
-        """
         self.config_path = Path(config_path)
         if not self.config_path.exists():
             logger.error(f"Configuration file not found at: {self.config_path}")
@@ -107,25 +95,6 @@ class DroneDetector:
             raise
 
     def detect(self, frame: np.ndarray) -> list[dict]:
-        """
-        Runs object detection inference on a single BGR image/frame.
-        Supports standard YOLOv8 inference or SAHI sliced inference.
-
-        Args:
-            frame: Input BGR image as a NumPy array (OpenCV format).
-
-        Returns:
-            A list of dictionary objects representing the detections:
-            [
-                {
-                    "bbox": [x1, y1, x2, y2],  # Bounding box coordinates (integers)
-                    "confidence": 0.89,        # Detection confidence float
-                    "class_id": 0,             # Class ID integer
-                    "class_name": "drone"      # Name of the detected class
-                },
-                ...
-            ]
-        """
         if frame is None:
             logger.warning("Received empty/None frame for detection.")
             return []
@@ -198,16 +167,6 @@ class DroneDetector:
             return []
 
     def draw_detections(self, frame: np.ndarray, detections: list[dict]) -> np.ndarray:
-        """
-        Draws annotated bounding boxes and labels onto a copy of the input frame.
-
-        Args:
-            frame: Input BGR frame.
-            detections: List of detection dictionaries as returned by self.detect().
-
-        Returns:
-            Annotated copy of the frame.
-        """
         if frame is None:
             return np.array([])
 

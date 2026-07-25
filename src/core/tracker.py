@@ -10,16 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 def compute_iou(box_a: list[int], box_b: list[int]) -> float:
-    """
-    Computes the Intersection over Union (IoU) of two bounding boxes.
-
-    Args:
-        box_a: Bounding box [x1, y1, x2, y2]
-        box_b: Bounding box [x1, y1, x2, y2]
-
-    Returns:
-        IoU value between 0.0 and 1.0.
-    """
     xa = max(box_a[0], box_b[0])
     ya = max(box_a[1], box_b[1])
     xb = min(box_a[2], box_b[2])
@@ -36,19 +26,7 @@ def compute_iou(box_a: list[int], box_b: list[int]) -> float:
 
 
 class DroneTracker:
-    """
-    A modular multi-object tracker for tracking drones across video frames.
-    Uses Hungarian algorithm for IoU-based association and manages track life cycle.
-    Supports persistent track IDs and movement trail rendering.
-    """
-
     def __init__(self, config_path: str | Path):
-        """
-        Initializes the DroneTracker with parameters loaded from config.yaml.
-
-        Args:
-            config_path: Path to the configuration YAML file.
-        """
         self.config_path = Path(config_path)
         if not self.config_path.exists():
             logger.error(f"Configuration file not found at: {self.config_path}")
@@ -79,29 +57,10 @@ class DroneTracker:
 
         # Tracker state variables
         self.next_track_id = 1
-        self.tracks = []  # List of dictionaries, each representing an active track
-        # track dict structure:
-        # {
-        #     "track_id": int,
-        #     "bbox": [x1, y1, x2, y2],
-        #     "confidence": float,
-        #     "class_id": int,
-        #     "class_name": str,
-        #     "lost_count": int,
-        #     "trail": list[tuple[int, int]]
-        # }
+        # List of dictionaries, each representing an active track
+        self.tracks = []  
 
     def update(self, detections: list[dict], frame: np.ndarray) -> list[dict]:
-        """
-        Updates the tracker with new detections and manages active tracks.
-
-        Args:
-            detections: List of detection dictionaries from the detector.
-            frame: Current frame (used for dimensions or visual reference).
-
-        Returns:
-            A list of tracked detection dictionaries, containing an added "track_id".
-        """
         if not self.tracking_enabled:
             # If tracking is disabled, simply return detections unchanged
             return detections
@@ -110,7 +69,6 @@ class DroneTracker:
         filtered_dets = [d for d in detections if d["confidence"] >= self.track_thresh]
 
         # Partition existing tracks into active (lost_count == 0) and lost (lost_count > 0)
-        # We will match against all tracks that are within the buffer limit
         matched_tracks = []
         unmatched_tracks = list(self.tracks)
         unmatched_dets = list(filtered_dets)
@@ -126,7 +84,6 @@ class DroneTracker:
             track_indices, det_indices = linear_sum_assignment(cost_matrix)
 
             # Process assignments
-            # Note: we must iterate backwards or keep track of indices to remove from unmatched lists safely
             assignments = []
             for t_idx, d_idx in zip(track_indices, det_indices):
                 cost = cost_matrix[t_idx, d_idx]
@@ -208,16 +165,6 @@ class DroneTracker:
         return output_detections
 
     def draw_tracks(self, frame: np.ndarray, tracked_detections: list[dict]) -> np.ndarray:
-        """
-        Draws bounding boxes, track IDs, and movement trails onto the frame.
-
-        Args:
-            frame: Input BGR frame.
-            tracked_detections: List of tracked detections containing "track_id".
-
-        Returns:
-            Annotated frame.
-        """
         if frame is None:
             return np.array([])
 

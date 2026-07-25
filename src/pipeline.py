@@ -15,18 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class DronePipeline:
-    """
-    Unified orchestrator class for the Drone Detection, Tracking, and Geofencing System.
-    Manages coordination between Detector, Tracker, Geofence, Snapshot, and Log sub-modules.
-    """
-
     def __init__(self, config_path: str | Path):
-        """
-        Initializes the pipeline by instantiating all core sub-modules.
-
-        Args:
-            config_path: Path to the configuration YAML file.
-        """
         self.config_path = Path(config_path)
         if not self.config_path.exists():
             logger.error(f"Configuration file not found at: {self.config_path}")
@@ -88,17 +77,6 @@ class DronePipeline:
                 raise
 
     def process_frame(self, frame: np.ndarray, current_fps: float = 0.0) -> tuple[np.ndarray, list[dict]]:
-        """
-        Executes a single pipeline step: Detects, Tracks, checks Geofence violations,
-        saves Snapshots, logs Events, and annotates the frame.
-
-        Args:
-            frame: Input raw BGR video frame.
-            current_fps: Current processing frame rate for screen dashboard display.
-
-        Returns:
-            A tuple of (annotated_frame, enriched_detections).
-        """
         if frame is None or frame.size == 0:
             return frame, []
 
@@ -151,10 +129,6 @@ class DronePipeline:
         return annotated_frame, final_detections
 
     def _draw_visuals(self, frame: np.ndarray, detections: list[dict], current_fps: float) -> np.ndarray:
-        """
-        Annotates a frame with geofence zones, target bounding boxes, movement trails,
-        warning banner, and FPS overlay.
-        """
         annotated_frame = frame.copy()
 
         # 1. Render Geofencing Zones

@@ -61,6 +61,3 @@ logging:
   log_dir: "logs"                # Base log directory
   log_format: "jsonl"            # "jsonl" or "text"
   log_level: "INFO"
-
-
-

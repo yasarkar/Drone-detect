@@ -9,18 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class AuditLogger:
-    """
-    Manages structured daily event logging for drone tracking activities.
-    Supports writing entries in JSON Lines (JSONL) format or raw text.
-    """
-
     def __init__(self, config_path: str | Path):
-        """
-        Initializes the AuditLogger using settings from config.yaml.
-
-        Args:
-            config_path: Path to the configuration YAML file.
-        """
         self.config_path = Path(config_path)
         if not self.config_path.exists():
             logger.error(f"Configuration file not found at: {self.config_path}")
@@ -50,16 +39,6 @@ class AuditLogger:
         zone_status: str,
         snapshot_path: str | Path | None = None
     ):
-        """
-        Logs a tracking event with standardized structure.
-
-        Args:
-            track_id: Identifier of the tracked object.
-            confidence: Confidence score of the detection.
-            bbox: Bounding box coordinates [x1, y1, x2, y2].
-            zone_status: Geofencing zone status ("INSIDE: Zone_Name" or "OUTSIDE").
-            snapshot_path: Path to the captured snapshot file if saved, else None.
-        """
         if not self.enabled:
             return
 

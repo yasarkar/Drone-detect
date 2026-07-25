@@ -9,19 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class GeofenceManager:
-    """
-    Manages spatial geofencing zones for drone threat detection.
-    Supports normalized coordinate zones, checks if tracked center points fall inside polygons,
-    tracks violated zones, and renders visual indicators.
-    """
-
     def __init__(self, config_path: str | Path):
-        """
-        Initializes the GeofenceManager using configurations from config.yaml.
-
-        Args:
-            config_path: Path to the configuration YAML file.
-        """
         self.config_path = Path(config_path)
         if not self.config_path.exists():
             logger.error(f"Configuration file not found at: {self.config_path}")
@@ -58,13 +46,6 @@ class GeofenceManager:
         self.violated_zones = set()
 
     def _update_pixel_polygons(self, frame_width: int, frame_height: int):
-        """
-        Translates normalized float coordinates (0.0 to 1.0) into actual pixel coordinates.
-
-        Args:
-            frame_width: Width of the current video frame.
-            frame_height: Height of the current video frame.
-        """
         if self.last_width == frame_width and self.last_height == frame_height:
             return  # Dimensions did not change
 
@@ -85,17 +66,6 @@ class GeofenceManager:
             zone["pixel_polygon"] = pixel_poly
 
     def check_violations(self, tracked_detections: list[dict], frame_shape: tuple) -> list[dict]:
-        """
-        Checks if tracked drone centers reside inside any restricted zone.
-        Enriches detection structures with zone status.
-
-        Args:
-            tracked_detections: List of tracked detections.
-            frame_shape: Shape tuple of the current frame (height, width, ...).
-
-        Returns:
-            Enriched list of detections.
-        """
         if not self.enabled or len(self.zones) == 0:
             # If disabled, fill in default safe values
             for det in tracked_detections:
@@ -143,16 +113,6 @@ class GeofenceManager:
         return enriched_detections
 
     def draw_zones(self, frame: np.ndarray) -> np.ndarray:
-        """
-        Draws semi-transparent polygon overlays representing restricted zones.
-        Color transitions or flashes dynamically when a violation is triggered.
-
-        Args:
-            frame: Input BGR frame.
-
-        Returns:
-            Annotated frame.
-        """
         if not self.enabled or len(self.zones) == 0 or frame is None or frame.size == 0:
             return frame
 
