@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['drones']
+
+roboflow:
+  workspace: yasar-kar
+  project: drone-detection-a1tsf-nlmsv-8rurc
+  version: dataset
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/yasar-kar/drone-detection-a1tsf-nlmsv-8rurc/dataset/dataset

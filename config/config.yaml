@@ -3,7 +3,7 @@
 
 # Dataset configuration
 # path to dataset YAML containing train/val/test splits and class names
-data_yaml_path: "dataset/data.yaml"
+data_yaml_path: "c:\\drone-detect\\dataset\\data.yaml"
 
 # Model hyperparameters
 model_type: "yolov8m.pt"          # Pre-trained base weights (yolov8s.pt, yolov8m.pt, etc.)
@@ -19,7 +19,7 @@ project_dir: "runs/detect"       # Project folder where training run results are
 name: "drone_model_exp"          # Subdirectory name under project_dir for this experiment
 
 # Inference configuration
-weights_path: "weights/best.pt"  # Path to the trained YOLO weights
+weights_path: "c:\\drone-detect\\weights\\best.pt"  # Path to the trained YOLO weights
 confidence_threshold: 0.50       # Confidence threshold for detections
 iou_threshold: 0.45              # Intersection over Union (IoU) threshold for NMS
 
