@@ -1,5 +1,7 @@
 # Drone Detection and Tracking System - Phase 1 Requirements
 
+--extra-index-url https://download.pytorch.org/whl/cu121
+
 # Core Machine Learning & Object Detection
 ultralytics>=8.0.0            # YOLOv8 / YOLO11 training and inference engine
 torch>=2.0.0                  # PyTorch deep learning framework (CUDA compatible)
@@ -11,6 +13,7 @@ sahi>=0.11.0                  # Slicing Aided Hyper Inference (SAHI) for small o
 
 # Tracking Support
 lapx>=0.5.2                   # Linear Assignment Problem solver (lap/lapx) for tracker matching (e.g., ByteTrack)
+scipy>=1.10.0                 # Scipy library for Hungarian matching algorithm (linear_sum_assignment)
 
 # Data Manipulation & Utilities
 pyyaml>=6.0                   # Configuration management

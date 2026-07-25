@@ -227,7 +227,7 @@ class DronePipeline:
                 label,
                 (x1 + 2, text_y),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                self.font_scale,
+                self.detector.font_scale,
                 (255, 255, 255),
                 1,
                 cv2.LINE_AA
