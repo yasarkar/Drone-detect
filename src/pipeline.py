@@ -136,7 +136,7 @@ class DronePipeline:
 
             # Audit Event Log
             if self.audit_logger is not None:
-                zone_status = f"INSIDE: {zone_name}" if in_zone else "DETECTED"
+                zone_status = f"INSIDE: {zone_name}" if in_zone else "OUTSIDE"
                 self.audit_logger.log_event(
                     track_id=track_id,
                     confidence=det["confidence"],
@@ -152,11 +152,16 @@ class DronePipeline:
 
     def _draw_visuals(self, frame: np.ndarray, detections: list[dict], current_fps: float) -> np.ndarray:
         """
-        Annotates a frame with target bounding boxes, movement trails, and FPS overlay.
+        Annotates a frame with geofence zones, target bounding boxes, movement trails,
+        warning banner, and FPS overlay.
         """
         annotated_frame = frame.copy()
 
-        # 1. Draw tracker trajectory trails
+        # 1. Render Geofencing Zones
+        if self.geofence is not None:
+            annotated_frame = self.geofence.draw_zones(annotated_frame)
+
+        # 2. Draw tracker trajectory trails
         if self.tracker is not None and self.tracker.draw_trail:
             for track in self.tracker.tracks:
                 trail = track["trail"]
@@ -168,7 +173,7 @@ class DronePipeline:
                     thickness = max(1, int(self.detector.bbox_thickness * (i / len(trail))))
                     cv2.line(annotated_frame, pt1, pt2, (255, 0, 0), thickness, cv2.LINE_AA)
 
-        # 2. Draw target bounding boxes and "Drone Detected" label tags
+        # 3. Draw target bounding boxes and "Drone Detected" label tags
         total_targets = len(detections)
         for idx, det in enumerate(detections, start=1):
             x1, y1, x2, y2 = det["bbox"]
@@ -186,8 +191,6 @@ class DronePipeline:
             )
 
             # Build clean label text
-            # Single drone -> "Drone Detected 85.0%"
-            # Multiple drones -> "Drone Detected #1 85.0%", "Drone Detected #2 91.2%"
             if total_targets > 1:
                 label = f"Drone Detected #{idx} {det['confidence']*100:.1f}%"
             else:
@@ -230,7 +233,37 @@ class DronePipeline:
                 cv2.LINE_AA
             )
 
-        # 3. Render FPS overlay on the top-left
+        # 4. Render top warning banner if any geofence zone is actively violated
+        if self.geofence is not None and len(self.geofence.violated_zones) > 0:
+            banner_h = 45
+            banner_overlay = annotated_frame.copy()
+
+            cv2.rectangle(
+                banner_overlay,
+                (0, 0),
+                (annotated_frame.shape[1], banner_h),
+                (0, 0, 255),
+                cv2.FILLED
+            )
+
+            cv2.addWeighted(banner_overlay, 0.85, annotated_frame, 0.15, 0, annotated_frame)
+
+            warning_text = "WARNING: RESTRICTED ZONE VIOLATION!"
+            (tw, th), tb = cv2.getTextSize(warning_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+            tx = (annotated_frame.shape[1] - tw) // 2
+            ty = (banner_h + th) // 2
+            cv2.putText(
+                annotated_frame,
+                warning_text,
+                (tx, ty),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (255, 255, 255),
+                2,
+                cv2.LINE_AA
+            )
+
+        # 5. Render FPS overlay on the top-left
         fps_text = f"FPS: {current_fps:.1f}"
         cv2.putText(
             annotated_frame,
@@ -238,7 +271,7 @@ class DronePipeline:
             (15, 35),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.7,
-            (0, 255, 0),  # Green FPS text for clean look
+            (0, 255, 0),  # Green FPS text
             2,
             cv2.LINE_AA
         )
