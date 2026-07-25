@@ -1,12 +1,10 @@
 # Drone Detection and Tracking System Configuration
-# Cross-platform safe configuration settings
 
-# Dataset configuration
-# path to dataset YAML containing train/val/test splits and class names
+# Dataset configuration path to dataset YAML containing train/val/test splits and class names
 data_yaml_path: "c:\\drone-detect\\dataset\\data.yaml"
 
 # Model hyperparameters
-model_type: "yolov8m.pt"          # Pre-trained base weights (yolov8s.pt, yolov8m.pt, etc.)
+model_type: "yolov8m.pt"         # Pre-trained base weights (yolov8s.pt, yolov8m.pt, etc.)
 epochs: 50                       # Number of training epochs
 imgsz: 640                       # Input image size (must be divisible by 32)
 batch_size: 16                   # Training batch size (use -1 for auto-batching)
@@ -31,7 +29,7 @@ visuals:
 
 # SAHI (Slicing Aided Hyper Inference) settings
 sahi:
-  enabled: true                  # Toggle SAHI on/off
+  enabled: false                 # Toggle SAHI on/off (Disabled for 50-60+ FPS real-time speed)
   slice_height: 512
   slice_width: 512
   overlap_height_ratio: 0.2
@@ -63,15 +61,6 @@ logging:
   log_dir: "logs"                # Base log directory
   log_format: "jsonl"            # "jsonl" or "text"
   log_level: "INFO"
-
-# Geofencing/Restricted zones configuration
-geofencing:
-  enabled: false                 # Disabled - detect all drones in view
-  zones:
-    - name: "Restricted_Zone_1"
-      # Normalized coordinates (0.0 to 1.0 relative to frame width/height)
-      polygon: [[0.2, 0.2], [0.8, 0.2], [0.8, 0.8], [0.2, 0.8]]
-      color: [0, 0, 255]          # Red BGR
 
 
 
