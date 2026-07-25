@@ -135,11 +135,15 @@ class DroneTracker:
                     assignments.append((t_idx, d_idx))
 
             # Apply matched assignments
-            # Sort assignments in descending order of track index to remove safely
-            assignments.sort(key=lambda x: x[0], reverse=True)
+            matched_t_indices = set()
+            matched_d_indices = set()
+
             for t_idx, d_idx in assignments:
-                track = unmatched_tracks.pop(t_idx)
-                det = unmatched_dets.pop(d_idx)
+                track = unmatched_tracks[t_idx]
+                det = unmatched_dets[d_idx]
+
+                matched_t_indices.add(t_idx)
+                matched_d_indices.add(d_idx)
 
                 # Update track details
                 track["bbox"] = det["bbox"]
@@ -155,6 +159,10 @@ class DroneTracker:
                     track["trail"].pop(0)
 
                 matched_tracks.append(track)
+
+            # Filter remaining unmatched tracks and detections
+            unmatched_tracks = [t for i, t in enumerate(unmatched_tracks) if i not in matched_t_indices]
+            unmatched_dets = [d for j, d in enumerate(unmatched_dets) if j not in matched_d_indices]
 
         # For remaining unmatched tracks, increment lost count
         for track in unmatched_tracks:

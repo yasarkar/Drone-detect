@@ -261,40 +261,17 @@ class DronePipeline:
                 cv2.LINE_AA
             )
 
-        # 5. Render pipeline modules status card overlay on the top-left
+        # 5. Render FPS overlay on the top-left
         fps_text = f"FPS: {current_fps:.1f}"
         cv2.putText(
             annotated_frame,
             fps_text,
             (15, 35),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
-            (0, 0, 255),  # Red
+            0.7,
+            (0, 255, 0),  # Green FPS text for clean look
             2,
             cv2.LINE_AA
         )
-
-        # Status Indicators list
-        indicators = [
-            (f"SAHI: {'ON' if self.detector.sahi_enabled else 'OFF'}", (0, 255, 0) if self.detector.sahi_enabled else (0, 0, 255)),
-            (f"TRACK: {'ON' if self.tracker is not None else 'OFF'}", (0, 255, 0) if self.tracker is not None else (0, 0, 255)),
-            (f"GEOFENCE: {'ON' if self.geofence is not None else 'OFF'}", (0, 255, 0) if self.geofence is not None else (0, 0, 255)),
-            (f"SNAPSHOTS: {'ON' if self.snapshot_mgr is not None else 'OFF'}", (0, 255, 0) if self.snapshot_mgr is not None else (0, 0, 255)),
-            (f"LOGGING: {'ON' if self.audit_logger is not None else 'OFF'}", (0, 255, 0) if self.audit_logger is not None else (0, 0, 255)),
-        ]
-
-        y_offset = 65
-        for text, color in indicators:
-            cv2.putText(
-                annotated_frame,
-                text,
-                (15, y_offset),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                color,
-                2,
-                cv2.LINE_AA
-            )
-            y_offset += 25
 
         return annotated_frame
