@@ -83,13 +83,12 @@ def draw_pipeline_visuals(
                 cv2.line(annotated_frame, pt1, pt2, (255, 0, 0), thickness, cv2.LINE_AA)
 
     # 3. Draw Bounding Boxes and Labels
-    for det in detections:
+    total_targets = len(detections)
+    for idx, det in enumerate(detections, start=1):
         x1, y1, x2, y2 = det["bbox"]
-        track_id = det.get("track_id", None)
-        in_zone = det.get("in_zone", False)
 
-        # RED bounding box if inside zone, else GREEN (detector configured color)
-        color = (0, 0, 255) if in_zone else detector.bbox_color
+        # Standard green bounding box
+        color = detector.bbox_color
 
         # Draw bbox rectangle
         cv2.rectangle(
@@ -101,10 +100,10 @@ def draw_pipeline_visuals(
         )
 
         # Format label text
-        id_str = f" #{track_id}" if track_id is not None else ""
-        label = f"{det['class_name']}{id_str} {det['confidence']*100:.1f}%"
-        if in_zone:
-            label += f" [ALERT: {det['zone_name']}]"
+        if total_targets > 1:
+            label = f"Drone Detected #{idx} {det['confidence']*100:.1f}%"
+        else:
+            label = f"Drone Detected {det['confidence']*100:.1f}%"
 
         # Calculate label background box size
         (text_w, text_h), baseline = cv2.getTextSize(

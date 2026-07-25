@@ -169,9 +169,9 @@ class DronePipeline:
                     cv2.line(annotated_frame, pt1, pt2, (255, 0, 0), thickness, cv2.LINE_AA)
 
         # 2. Draw target bounding boxes and "Drone Detected" label tags
-        for det in detections:
+        total_targets = len(detections)
+        for idx, det in enumerate(detections, start=1):
             x1, y1, x2, y2 = det["bbox"]
-            track_id = det.get("track_id", None)
 
             # Standard green bounding box
             color = self.detector.bbox_color
@@ -186,8 +186,12 @@ class DronePipeline:
             )
 
             # Build clean label text
-            id_str = f" #{track_id}" if (track_id is not None and track_id != -1) else ""
-            label = f"Drone Detected{id_str} {det['confidence']*100:.1f}%"
+            # Single drone -> "Drone Detected 85.0%"
+            # Multiple drones -> "Drone Detected #1 85.0%", "Drone Detected #2 91.2%"
+            if total_targets > 1:
+                label = f"Drone Detected #{idx} {det['confidence']*100:.1f}%"
+            else:
+                label = f"Drone Detected {det['confidence']*100:.1f}%"
 
             # Calculate label text bounding box
             (text_w, text_h), baseline = cv2.getTextSize(
