@@ -178,10 +178,9 @@ def main():
 
             # Keep developer informed in the terminal
             if frame_count % 30 == 0:
-                violation_state = len(pipeline.geofence.violated_zones) if pipeline.geofence else 0
                 logger.info(
                     f"Frame {frame_count} | Targets: {len(detections)} | "
-                    f"Violations: {violation_state} | Speed: {fps_smoothed:.1f} FPS"
+                    f"Speed: {fps_smoothed:.1f} FPS"
                 )
 
     except KeyboardInterrupt:

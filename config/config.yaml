@@ -66,7 +66,7 @@ logging:
 
 # Geofencing/Restricted zones configuration
 geofencing:
-  enabled: true
+  enabled: false                 # Disabled - detect all drones in view
   zones:
     - name: "Restricted_Zone_1"
       # Normalized coordinates (0.0 to 1.0 relative to frame width/height)
