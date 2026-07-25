@@ -1,0 +1,96 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script run within a template
+#  Fixed class names for transform datasets
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nosenv/
+.compare/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+active_env/
+conda-env/
+
+# Editor / IDE Configs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Drone System Captures & Snapshots
+captures/*
+!captures/.gitkeep
+
+# System Log files
+logs/*
+!logs/.gitkeep
+
+# YOLOv8 Training Runs & Experiments
+runs/
+
+# Pre-trained & Trained Model weights
+*.pt
+*.engine
+*.onnx
+weights/*
+!weights/.gitkeep
+
+# Local Drone Datasets (Images and Labels)
+dataset/train/
+dataset/valid/
+dataset/test/
+dataset/README.*.txt
+
