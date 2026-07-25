@@ -75,7 +75,7 @@ class AuditLogger:
             "confidence": round(float(confidence), 4),
             "bbox": [int(coord) for coord in bbox],
             "zone_status": str(zone_status),
-            "snapshot_path": str(snapshot_path) if snapshot_path else None
+            "snapshot_path": Path(snapshot_path).as_posix() if snapshot_path else None
         }
 
         # 3. Resolve output log file based on current date (daily logging)

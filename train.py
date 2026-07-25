@@ -94,7 +94,7 @@ def main():
             epochs=epochs,
             imgsz=imgsz,
             batch=batch_size,
-            device=0,
+            device=device,
             project=project_dir,
             name=run_name,
             exist_ok=True  # Overwrite/reuse the run folder instead of auto-incrementing
