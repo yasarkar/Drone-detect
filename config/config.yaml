@@ -61,3 +61,23 @@ logging:
   log_dir: "logs"                # Base log directory
   log_format: "jsonl"            # "jsonl" or "text"
   log_level: "INFO"
+
+# Satellite Tracking Information Panel configuration
+satellite:
+  enabled: true
+  display_mode: "overlay"  # "overlay" to render in-frame, "window" to show in a separate window
+  position: "top-right"    # "top-right" or "top-left" (for overlay mode)
+  observer_lat: 41.0082    # Observer latitude (default: Istanbul)
+  observer_lon: 28.9784    # Observer longitude
+  update_interval_sec: 1.0 # How often to recalculate satellite positions (seconds)
+  list:
+    - name: "ISS (ZARYA)"
+      norad_id: 25544
+    - name: "GPS-BIIRM-4"
+      norad_id: 28485
+    - name: "STARLINK-3041"
+      norad_id: 53545
+    - name: "NOAA-19"
+      norad_id: 33591
+    - name: "TURKSAT-5A"
+      norad_id: 47306

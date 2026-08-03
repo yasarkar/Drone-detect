@@ -9,6 +9,7 @@ from src.core.tracker import DroneTracker
 from src.core.zone_logic import GeofenceManager
 from src.utils.snapshot import SnapshotManager
 from src.utils.logger import AuditLogger
+from src.core.satellite import SatelliteTracker
 
 # Setup module logging
 logger = logging.getLogger(__name__)
@@ -74,6 +75,16 @@ class DronePipeline:
                 self.audit_logger = AuditLogger(self.config_path)
             except Exception as e:
                 logger.error(f"Failed to initialize AuditLogger: {e}")
+                raise
+
+        # 6. Initialize Satellite Tracker if enabled
+        self.satellite_tracker = None
+        satellite_enabled = self.config.get("satellite", {}).get("enabled", True)
+        if satellite_enabled:
+            try:
+                self.satellite_tracker = SatelliteTracker(self.config)
+            except Exception as e:
+                logger.error(f"Failed to initialize SatelliteTracker: {e}")
                 raise
 
     def process_frame(self, frame: np.ndarray, current_fps: float = 0.0) -> tuple[np.ndarray, list[dict]]:
@@ -249,5 +260,10 @@ class DronePipeline:
             2,
             cv2.LINE_AA
         )
+
+        # 6. Draw Satellite Overlay if enabled and configured to "overlay" mode
+        if self.satellite_tracker is not None and self.satellite_tracker.enabled:
+            if self.satellite_tracker.display_mode == "overlay":
+                annotated_frame = self.satellite_tracker.overlay_on_frame(annotated_frame)
 
         return annotated_frame

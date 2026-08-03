@@ -126,6 +126,9 @@ def main():
     alpha = 0.9  # Exponential smoothing factor
 
     window_name = "Drone Detection, Tracking & Geofencing System"
+    sat_window_name = "Satellite Tracking Info Window"
+    sat_window_enabled = False
+
     if not args.no_display:
         logger.info("Press 'q' inside display window to exit cleanly.")
         try:
@@ -134,6 +137,17 @@ def main():
             cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         except Exception as e:
             logger.warning(f"Could not set window to fullscreen: {e}")
+
+        # Check if satellite window is enabled
+        if pipeline.satellite_tracker is not None and pipeline.satellite_tracker.enabled:
+            if pipeline.satellite_tracker.display_mode == "window":
+                sat_window_enabled = True
+                logger.info("Opening Satellite Tracking Info Window...")
+                try:
+                    cv2.namedWindow(sat_window_name, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+                    cv2.resizeWindow(sat_window_name, 380, 200)
+                except Exception as e:
+                    logger.warning(f"Could not initialize satellite window settings: {e}")
 
     frame_count = 0
     try:
@@ -168,6 +182,12 @@ def main():
             if not args.no_display:
                 try:
                     cv2.imshow(window_name, annotated_frame)
+                    
+                    # Update and display satellite dashboard window if enabled
+                    if sat_window_enabled and pipeline.satellite_tracker is not None:
+                        sat_frame = pipeline.satellite_tracker.draw_dashboard()
+                        cv2.imshow(sat_window_name, sat_frame)
+
                     # Graceful exit on pressing 'q'
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         logger.info("Exit command 'q' received. Exiting.")
