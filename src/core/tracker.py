@@ -107,13 +107,14 @@ class DroneTracker:
                 track["confidence"] = det["confidence"]
                 track["lost_count"] = 0
                 
-                # Update trail
-                x1, y1, x2, y2 = det["bbox"]
-                cx = int((x1 + x2) / 2)
-                cy = int((y1 + y2) / 2)
-                track["trail"].append((cx, cy))
-                if len(track["trail"]) > self.trail_length:
-                    track["trail"].pop(0)
+                # Update trail (only if trajectory rendering is enabled)
+                if self.draw_trail:
+                    x1, y1, x2, y2 = det["bbox"]
+                    cx = int((x1 + x2) / 2)
+                    cy = int((y1 + y2) / 2)
+                    track["trail"].append((cx, cy))
+                    if len(track["trail"]) > self.trail_length:
+                        track["trail"].pop(0)
 
                 matched_tracks.append(track)
 
@@ -130,10 +131,6 @@ class DroneTracker:
 
         # For unmatched detections, create new tracks
         for det in unmatched_dets:
-            x1, y1, x2, y2 = det["bbox"]
-            cx = int((x1 + x2) / 2)
-            cy = int((y1 + y2) / 2)
-            
             new_track = {
                 "track_id": self.next_track_id,
                 "bbox": det["bbox"],
@@ -141,8 +138,13 @@ class DroneTracker:
                 "class_id": det["class_id"],
                 "class_name": det["class_name"],
                 "lost_count": 0,
-                "trail": [(cx, cy)]
             }
+            # Initialize trail history only if trajectory rendering is enabled
+            if self.draw_trail:
+                x1, y1, x2, y2 = det["bbox"]
+                cx = int((x1 + x2) / 2)
+                cy = int((y1 + y2) / 2)
+                new_track["trail"] = [(cx, cy)]
             self.next_track_id += 1
             matched_tracks.append(new_track)
 
@@ -153,8 +155,12 @@ class DroneTracker:
         output_detections = []
         for track in self.tracks:
             if track["lost_count"] == 0:
+                x1, y1, x2, y2 = track["bbox"]
+                cx = int((x1 + x2) / 2)
+                cy = int((y1 + y2) / 2)
                 output_det = {
                     "bbox": track["bbox"],
+                    "center_px": [cx, cy],
                     "confidence": track["confidence"],
                     "class_id": track["class_id"],
                     "class_name": track["class_name"],

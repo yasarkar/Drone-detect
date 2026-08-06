@@ -79,11 +79,15 @@ class SatelliteTracker:
 
     def _load_tle_data(self):
         """
-        Downloads TLE data from CelesTrak for each satellite by NORAD catalog number.
-        Uses the GP API endpoint with TLE format.
+        Loads TLE data for each satellite. Uses local disk cache (.tle_cache/norad_{id}.tle)
+        if available or fetched from CelesTrak GP API endpoint.
         """
         import urllib.request
         import urllib.error
+        from pathlib import Path
+
+        cache_dir = Path(".tle_cache")
+        cache_dir.mkdir(parents=True, exist_ok=True)
 
         for sat_cfg in self.sat_configs:
             name = sat_cfg.get("name", "UNKNOWN")
@@ -93,42 +97,64 @@ class SatelliteTracker:
                 logger.warning(f"Satellite '{name}' has no norad_id, skipping.")
                 continue
 
+            cache_file = cache_dir / f"norad_{norad_id}.tle"
+            tle_text = None
+
+            # Try network fetch first
             url = f"https://celestrak.org/NORAD/elements/gp.php?CATNR={norad_id}&FORMAT=TLE"
             try:
                 logger.info(f"Fetching TLE for {name} (NORAD {norad_id})...")
                 req = urllib.request.Request(url, headers={"User-Agent": "DroneDetect/1.0"})
-                with urllib.request.urlopen(req, timeout=10) as response:
+                with urllib.request.urlopen(req, timeout=5) as response:
                     tle_text = response.read().decode("utf-8").strip()
 
-                lines = tle_text.splitlines()
-                if len(lines) < 2:
-                    logger.warning(f"Invalid TLE response for {name} (NORAD {norad_id}): not enough lines.")
-                    continue
+                if tle_text and len(tle_text.splitlines()) >= 2:
+                    # Save to local cache
+                    try:
+                        with open(cache_file, "w", encoding="utf-8") as cf:
+                            cf.write(f"{name}\n\n" + tle_text + "\n")
+                    except Exception as ce:
+                        logger.debug(f"Failed to write TLE cache file: {ce}")
+            except Exception as e:
+                logger.warning(f"Network fetch failed for TLE {name} (NORAD {norad_id}): {e}. Attempting local cache fallback.")
 
-                # CelesTrak TLE format returns 3 lines: name, line1, line2
-                if len(lines) >= 3:
-                    tle_name = lines[0].strip()
-                    tle_line1 = lines[1].strip()
-                    tle_line2 = lines[2].strip()
-                else:
-                    # 2LE format (no name line)
-                    tle_name = name
-                    tle_line1 = lines[0].strip()
-                    tle_line2 = lines[1].strip()
+            # Fallback to local cache if network fetch failed or yielded empty
+            if not tle_text and cache_file.exists():
+                try:
+                    with open(cache_file, "r", encoding="utf-8") as cf:
+                        tle_text = cf.read().strip()
+                    logger.info(f"Loaded TLE for {name} from local cache: {cache_file}")
+                except Exception as fe:
+                    logger.error(f"Failed to read local TLE cache for {name}: {fe}")
 
-                # Validate TLE line format
-                if not tle_line1.startswith("1 ") or not tle_line2.startswith("2 "):
-                    logger.warning(f"Malformed TLE data for {name} (NORAD {norad_id}). Skipping.")
-                    continue
+            if not tle_text:
+                logger.warning(f"No TLE data available for {name} (NORAD {norad_id}). Skipping.")
+                continue
 
+            lines = [line.strip() for line in tle_text.splitlines() if line.strip()]
+            if len(lines) < 2:
+                logger.warning(f"Invalid TLE content for {name} (NORAD {norad_id}). Skipping.")
+                continue
+
+            # CelesTrak TLE format returns 3 lines: name, line1, line2 or 2 lines: line1, line2
+            if len(lines) >= 3 and lines[1].startswith("1 ") and lines[2].startswith("2 "):
+                tle_name = lines[0]
+                tle_line1 = lines[1]
+                tle_line2 = lines[2]
+            elif lines[0].startswith("1 ") and lines[1].startswith("2 "):
+                tle_name = name
+                tle_line1 = lines[0]
+                tle_line2 = lines[1]
+            else:
+                logger.warning(f"Malformed TLE lines for {name} (NORAD {norad_id}). Skipping.")
+                continue
+
+            try:
                 sat = EarthSatellite(tle_line1, tle_line2, tle_name, self._ts)
                 self._satellites.append((name, sat))
                 logger.info(f"  ✓ Loaded TLE for {name} (epoch: {sat.epoch.utc_strftime('%Y-%m-%d %H:%M UTC')})")
-
-            except urllib.error.URLError as e:
-                logger.warning(f"Network error fetching TLE for {name} (NORAD {norad_id}): {e}")
-            except Exception as e:
-                logger.warning(f"Failed to load TLE for {name} (NORAD {norad_id}): {e}")
+            except Exception as se:
+                logger.error(f"Failed to construct EarthSatellite for {name}: {se}")
 
     def get_satellite_states(self) -> list[dict]:
         """
@@ -214,7 +240,7 @@ class SatelliteTracker:
         cv2.rectangle(frame, (0, 0), (self.width - 1, self.height - 1), (50, 50, 50), 1)
 
         # Left Panel - Radar display
-        rcx, rcy = 75, 100
+        rcx, rcy = 75, 105
         cv2.circle(frame, (rcx, rcy), self.radar_radius, (0, 100, 0), 1, cv2.LINE_AA)
         cv2.circle(frame, (rcx, rcy), int(self.radar_radius * 0.66), (0, 70, 0), 1, cv2.LINE_AA)
         cv2.circle(frame, (rcx, rcy), int(self.radar_radius * 0.33), (0, 45, 0), 1, cv2.LINE_AA)
@@ -223,14 +249,20 @@ class SatelliteTracker:
         cv2.line(frame, (rcx - self.radar_radius, rcy), (rcx + self.radar_radius, rcy), (0, 70, 0), 1)
         cv2.line(frame, (rcx, rcy - self.radar_radius), (rcx, rcy + self.radar_radius), (0, 70, 0), 1)
 
+        # Compass direction labels (N, E, S, W)
+        cv2.putText(frame, "N", (rcx - 3, rcy - self.radar_radius + 9), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.putText(frame, "S", (rcx - 3, rcy + self.radar_radius - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 200, 0), 1, cv2.LINE_AA)
+        cv2.putText(frame, "E", (rcx + self.radar_radius - 8, rcy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 200, 0), 1, cv2.LINE_AA)
+        cv2.putText(frame, "W", (rcx - self.radar_radius + 2, rcy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 200, 0), 1, cv2.LINE_AA)
+
         # Rotating radar sweep line
         sweep_angle = (time.time() * 2.0) % (2.0 * math.pi)
         sx = int(rcx + self.radar_radius * math.cos(sweep_angle))
         sy = int(rcy - self.radar_radius * math.sin(sweep_angle))
         cv2.line(frame, (rcx, rcy), (sx, sy), (0, 180, 0), 1, cv2.LINE_AA)
 
-        # Label radar
-        cv2.putText(frame, "SATELLITE SKYVIEW", (15, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+        # Label radar title
+        cv2.putText(frame, "SATELLITE SKYVIEW", (12, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 0), 1, cv2.LINE_AA)
 
         # Draw Satellites on Radar
         states = self.get_satellite_states()
@@ -248,15 +280,15 @@ class SatelliteTracker:
                     cv2.putText(frame, short_name, (sx + 4, sy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 250, 200), 1, cv2.LINE_AA)
 
         # Right Panel - Tabular listing of active systems
-        start_x = 160
-        cv2.putText(frame, "NAME", (start_x, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
-        cv2.putText(frame, "LAT / LON", (start_x + 90, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
-        cv2.putText(frame, "ALT", (start_x + 180, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
+        start_x = 158
+        cv2.putText(frame, "NAME", (start_x, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(frame, "LAT / LON", (start_x + 90, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(frame, "ALT", (start_x + 180, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
 
-        y_offset = 42
+        y_offset = 38
         for sat in states:
             name = sat["name"][:12]
-            coord_str = f"{sat['lat']:.2f} / {sat['lon']:.2f}"
+            coord_str = f"{sat['lat']:.2f}/{sat['lon']:.2f}"
             alt_str = f"{sat['alt']:.0f}km"
 
             # Differentiate visual color by status (visible = active)
@@ -296,16 +328,22 @@ class SatelliteTracker:
         sub_img = main_frame[y_start:y_start+self.height, x_start:x_start+self.width]
         overlay = sub_img.copy()
         cv2.rectangle(overlay, (0, 0), (self.width - 1, self.height - 1), (15, 22, 20), cv2.FILLED)
-        cv2.addWeighted(overlay, 0.82, sub_img, 0.18, 0, sub_img)
+        cv2.addWeighted(overlay, 0.85, sub_img, 0.15, 0, sub_img)
 
         # 2. Draw active components on the card area
         # Radar circles
-        rcx, rcy = 75, 100
+        rcx, rcy = 75, 105
         cv2.circle(sub_img, (rcx, rcy), self.radar_radius, (0, 130, 0), 1, cv2.LINE_AA)
         cv2.circle(sub_img, (rcx, rcy), int(self.radar_radius * 0.66), (0, 90, 0), 1, cv2.LINE_AA)
         cv2.circle(sub_img, (rcx, rcy), int(self.radar_radius * 0.33), (0, 55, 0), 1, cv2.LINE_AA)
         cv2.line(sub_img, (rcx - self.radar_radius, rcy), (rcx + self.radar_radius, rcy), (0, 90, 0), 1)
         cv2.line(sub_img, (rcx, rcy - self.radar_radius), (rcx, rcy + self.radar_radius), (0, 90, 0), 1)
+
+        # Compass direction markers (N, S, E, W)
+        cv2.putText(sub_img, "N", (rcx - 3, rcy - self.radar_radius + 9), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.putText(sub_img, "S", (rcx - 3, rcy + self.radar_radius - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 200, 0), 1, cv2.LINE_AA)
+        cv2.putText(sub_img, "E", (rcx + self.radar_radius - 8, rcy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 200, 0), 1, cv2.LINE_AA)
+        cv2.putText(sub_img, "W", (rcx - self.radar_radius + 2, rcy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 200, 0), 1, cv2.LINE_AA)
 
         # Sweep line
         sweep_angle = (time.time() * 2.2) % (2.0 * math.pi)
@@ -314,7 +352,7 @@ class SatelliteTracker:
         cv2.line(sub_img, (rcx, rcy), (sx, sy), (0, 240, 0), 1, cv2.LINE_AA)
 
         # Title text
-        cv2.putText(sub_img, "SAT STATUS DISPLAY", (15, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.putText(sub_img, "SAT STATUS DISPLAY", (12, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 0), 1, cv2.LINE_AA)
 
         # Satellite data calculations using real TLE data
         states = self.get_satellite_states()
@@ -330,12 +368,12 @@ class SatelliteTracker:
                     cv2.putText(sub_img, short_name, (sx + 4, sy + 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 255, 200), 1, cv2.LINE_AA)
 
         # Coordinates List Panel (Table columns)
-        start_x = 160
-        cv2.putText(sub_img, "SAT SYSTEM", (start_x, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
-        cv2.putText(sub_img, "LAT / LON", (start_x + 90, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
-        cv2.putText(sub_img, "ALT", (start_x + 180, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1, cv2.LINE_AA)
+        start_x = 158
+        cv2.putText(sub_img, "SAT SYSTEM", (start_x, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(sub_img, "LAT / LON", (start_x + 90, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(sub_img, "ALT", (start_x + 180, 18), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 255, 255), 1, cv2.LINE_AA)
 
-        y_offset = 42
+        y_offset = 38
         for sat in states:
             name = sat["name"][:12]
             coord_str = f"{sat['lat']:.2f}/{sat['lon']:.2f}"

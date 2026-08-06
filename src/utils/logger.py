@@ -36,7 +36,10 @@ class AuditLogger:
         track_id: int,
         confidence: float,
         bbox: list[int],
-        snapshot_path: str | Path | None = None
+        center_px: list[int] | None = None,
+        center_norm: list[float] | None = None,
+        snapshot_path: str | Path | None = None,
+        geo_coords: dict | None = None
     ):
         if not self.enabled:
             return
@@ -46,13 +49,21 @@ class AuditLogger:
         # Format: YYYY-MM-DDTHH:MM:SS.mmmZ
         timestamp = now_utc.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
+        # Calculate default center if not explicitly provided
+        if center_px is None and len(bbox) == 4:
+            x1, y1, x2, y2 = bbox
+            center_px = [(x1 + x2) // 2, (y1 + y2) // 2]
+
         # 2. Build structured record dictionary
         record = {
             "timestamp": timestamp,
             "track_id": int(track_id),
             "confidence": round(float(confidence), 4),
             "bbox": [int(coord) for coord in bbox],
-            "snapshot_path": Path(snapshot_path).as_posix() if snapshot_path else None
+            "center_px": center_px,
+            "center_norm": [round(float(c), 4) for c in center_norm] if center_norm else None,
+            "snapshot_path": Path(snapshot_path).as_posix() if snapshot_path else None,
+            "geo": geo_coords
         }
 
         # 3. Resolve output log file based on current date (daily logging)
@@ -67,10 +78,14 @@ class AuditLogger:
                     f.write(json.dumps(record) + "\n")
                 else:
                     # Clearer text format fallback
+                    coord_info = f" CENTER={center_px}" if center_px else ""
                     snapshot_info = f", snapshot={record['snapshot_path']}" if record['snapshot_path'] else ""
+                    geo_info = ""
+                    if geo_coords:
+                        geo_info = f" GEO=({geo_coords.get('lat', 0.0):.5f},{geo_coords.get('lon', 0.0):.5f})"
                     text_line = (
                         f"[{timestamp}] ID={track_id} CONF={record['confidence']:.4f} "
-                        f"BBOX={bbox}{snapshot_info}\n"
+                        f"BBOX={bbox}{coord_info}{geo_info}{snapshot_info}\n"
                     )
                     f.write(text_line)
         except Exception as e:
