@@ -36,7 +36,6 @@ class AuditLogger:
         track_id: int,
         confidence: float,
         bbox: list[int],
-        zone_status: str,
         snapshot_path: str | Path | None = None
     ):
         if not self.enabled:
@@ -53,7 +52,6 @@ class AuditLogger:
             "track_id": int(track_id),
             "confidence": round(float(confidence), 4),
             "bbox": [int(coord) for coord in bbox],
-            "zone_status": str(zone_status),
             "snapshot_path": Path(snapshot_path).as_posix() if snapshot_path else None
         }
 
@@ -72,7 +70,7 @@ class AuditLogger:
                     snapshot_info = f", snapshot={record['snapshot_path']}" if record['snapshot_path'] else ""
                     text_line = (
                         f"[{timestamp}] ID={track_id} CONF={record['confidence']:.4f} "
-                        f"BBOX={bbox} ZONE={zone_status}{snapshot_info}\n"
+                        f"BBOX={bbox}{snapshot_info}\n"
                     )
                     f.write(text_line)
         except Exception as e:

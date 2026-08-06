@@ -19,7 +19,7 @@ def parse_arguments() -> argparse.Namespace:
     """
     Parses command line arguments for the inference test script.
     """
-    parser = argparse.ArgumentParser(description="Integrated Drone Detection, Tracking & Geofencing System Test.")
+    parser = argparse.ArgumentParser(description="Integrated Drone Detection & Tracking System Test.")
     parser.add_argument(
         "--config",
         type=str,
@@ -78,7 +78,7 @@ def main():
         logger.error(f"Could not open source: {source}")
         sys.exit(1)
 
-    window_name = "Drone Detection, Tracking & Geofencing System (Test Mode)"
+    window_name = "Drone Detection & Tracking System (Test Mode)"
     if not args.no_display:
         logger.info("Press 'q' inside display window to exit cleanly.")
         try:

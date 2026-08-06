@@ -21,7 +21,7 @@ def parse_arguments() -> argparse.Namespace:
     Parses command line arguments for the main entry point.
     """
     parser = argparse.ArgumentParser(
-        description="Modular Drone Detection, Tracking & Geofencing System CLI."
+        description="Modular Drone Detection & Tracking System CLI."
     )
     parser.add_argument(
         "--source",
@@ -125,7 +125,7 @@ def main():
     fps_smoothed = 0.0
     alpha = 0.9  # Exponential smoothing factor
 
-    window_name = "Drone Detection, Tracking & Geofencing System"
+    window_name = "Drone Detection & Tracking System"
     sat_window_name = "Satellite Tracking Info Window"
     sat_window_enabled = False
 

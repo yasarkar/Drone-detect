@@ -1,6 +1,6 @@
-# Drone Detection, Tracking & Geofencing System
+# Drone Detection & Tracking System
 
-A modular, production-ready, cross-platform Computer Vision application built with **Python**, **YOLOv8**, **PyTorch**, and **OpenCV**. The system provides real-time drone detection, multi-object tracking, geofence zone monitoring, automatic debounced event snapshots, and daily structured audit logs.
+A modular, production-ready, cross-platform Computer Vision application built with **Python**, **YOLOv8**, **PyTorch**, and **OpenCV**. The system provides real-time drone detection, multi-object tracking, automatic debounced event snapshots, real-time satellite skyview panels, and daily structured audit logs.
 
 ---
 
@@ -8,8 +8,7 @@ A modular, production-ready, cross-platform Computer Vision application built wi
 
 - **Object Detection**: Core YOLOv8 inference with optional **SAHI (Slicing Aided Hyper Inference)** for small object/long-range drone detection.
 - **Multi-Object Tracking**: Hungarian matching algorithm based on Intersection-over-Union (IoU) to maintain persistent track IDs and movement trail trajectories.
-- **Geofencing & Alarm Zones**: Defines restricted polygon areas, checks for drone violations, and updates display bounding boxes to Red upon zone entry.
-- **Translucent UI & Warning Banners**: Annotates video feeds with zone outlines, motion trails, a dashboard status overlay, and a high-visibility flashing warning banner.
+- **Real-Time Satellite HUD**: Real-time TLE orbital mechanics tracking for overhead satellites via Skyfield.
 - **Debounced Snapshots**: Saves debounced target JPEG snapshots to daily subfolders (`captures/YYYY-MM-DD/`) when confidence requirements are met.
 - **Event Audit Logs**: Appends structured JSON Lines (JSONL) records (`logs/drone_events_YYYY-MM-DD.jsonl`) detailing timestamps, track IDs, box coordinates, and snapshot paths.
 - **Model Compilation**: Compiles `.pt` PyTorch models to **ONNX** or **TensorRT (.engine)** formats for maximum GPU inference frame rates.
@@ -22,13 +21,13 @@ A modular, production-ready, cross-platform Computer Vision application built wi
 drone-detect/
 │
 ├── config/
-│   └── config.yaml          # Hyperparameters, paths, geofences, and visual layouts
+│   └── config.yaml          # Hyperparameters, paths, and visual layouts
 │
 ├── src/
 │   ├── core/
 │   │   ├── detector.py      # Core DroneDetector class (YOLO + SAHI)
 │   │   ├── tracker.py       # DroneTracker class (Hungarian match + trails)
-│   │   └── zone_logic.py    # GeofenceManager (Polygon violations + overlays)
+│   │   └── satellite.py     # SatelliteTracker (Orbital mechanics TLE tracker)
 │   │
 │   ├── utils/
 │   │   ├── logger.py        # AuditLogger class (daily structured logs)
@@ -121,7 +120,7 @@ Run the main tracking application using the unified pipeline CLI:
 
 ## ⚙️ Configuration File (`config/config.yaml`)
 
-Manage hyperparameters, geofence polygons, and rendering layouts in `config/config.yaml`:
+Manage hyperparameters and rendering layouts in `config/config.yaml`:
 ```yaml
 # Dataset configuration
 data_yaml_path: "dataset/data.yaml"
@@ -147,12 +146,5 @@ tracking:
   track_thresh: 0.5
   draw_trail: true
   trail_length: 30
-
-# Restricted Geofencing Zones
-geofencing:
-  enabled: true
-  zones:
-    - name: "Restricted_Zone_1"
-      polygon: [[0.2, 0.2], [0.8, 0.2], [0.8, 0.8], [0.2, 0.8]] # Normalized coordinates
-      color: [0, 0, 255]          # Zone outline BGR color
 ```
+
