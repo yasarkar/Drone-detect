@@ -12,7 +12,7 @@ opencv-python>=4.7.0          # OpenCV for image/video capture, processing, and 
 sahi>=0.11.0                  # Slicing Aided Hyper Inference (SAHI) for small object/drone detection
 
 # Tracking Support
-lapx>=0.5.2                   # Linear Assignment Problem solver (lap/lapx) for tracker matching (e.g., ByteTrack)
+lapx>=0.5.2                   # Linear Assignment Problem solver (lap/lapx) for tracker matching
 scipy>=1.10.0                 # Scipy library for Hungarian matching algorithm (linear_sum_assignment)
 
 # Data Manipulation & Utilities

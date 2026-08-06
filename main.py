@@ -45,12 +45,35 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Saves annotated output video stream to captures/output_video.mp4."
     )
+    parser.add_argument(
+        "--generate-report",
+        nargs="?",
+        const="today",
+        type=str,
+        default=None,
+        help="Generates Markdown summary report for date YYYY-MM-DD (defaults to today)."
+    )
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
     config_path = Path(args.config)
+
+    # Standalone report generation mode
+    if args.generate_report is not None:
+        from src.utils.reporter import ReportGenerator
+        date_param = None if args.generate_report == "today" else args.generate_report
+        try:
+            reporter = ReportGenerator(config_path)
+            rep_file = reporter.generate_daily_report(date_param)
+            if rep_file:
+                logger.info(f"Report generation complete: {rep_file.absolute()}")
+            else:
+                logger.warning("Report generation failed or no data available.")
+        except Exception as e:
+            logger.error(f"Failed to generate report: {e}")
+        return
 
     # 1. Load config for fallback configurations
     if not config_path.exists():
@@ -220,6 +243,17 @@ def main():
             except Exception:
                 pass
         
+        # 12. Auto-generate daily report on exit if configured
+        if config.get("reporting", {}).get("auto_generate_on_exit", True):
+            try:
+                from src.utils.reporter import ReportGenerator
+                reporter = ReportGenerator(config_path)
+                rep_file = reporter.generate_daily_report()
+                if rep_file:
+                    logger.info(f"Daily summary report updated: {rep_file.absolute()}")
+            except Exception as re_err:
+                logger.warning(f"Could not generate report on exit: {re_err}")
+
         logger.info("System shut down cleanly.")
 
 
