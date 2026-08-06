@@ -40,7 +40,9 @@ sahi:
 # Tracking settings
 tracking:
   enabled: true                  # Toggle tracking on/off
-  tracker_type: "bytetrack"      # Default ByteTrack support
+  # NOTE: Custom Hungarian/IoU tracker implementation (see src/core/tracker.py).
+  # Not ByteTrack. This key is informational only and not read by the code.
+  tracker_type: "hungarian_iou"
   track_thresh: 0.5
   track_buffer: 30
   match_thresh: 0.8
@@ -62,6 +64,12 @@ logging:
   log_format: "jsonl"            # "jsonl" or "text"
   log_level: "INFO"
 
+# Summary Report Generator configuration
+reporting:
+  enabled: true
+  output_dir: "logs"
+  auto_generate_on_exit: true    # Automatically produce daily Markdown report on application shutdown
+
 # Satellite Tracking Information Panel configuration
 satellite:
   enabled: true
@@ -81,3 +89,20 @@ satellite:
       norad_id: 33591
     - name: "TURKSAT-5A"
       norad_id: 47306
+
+# Real-world GPS coordinate conversion for detected targets (static camera)
+# Maps target pixel coordinates to WGS84 lat/lon via ground-plane intersection.
+geo_mapping:
+  enabled: true               # Toggle pixel -> lat/lon conversion
+  camera:
+    latitude: 41.0082         # Camera GPS latitude (default: Istanbul)
+    longitude: 28.9784        # Camera GPS longitude
+    altitude_m: 5.0           # Camera height above mean sea level (meters)
+    heading_deg: 0.0          # Camera yaw: azimuth measured clockwise from North (0 = due North)
+    pitch_deg: -10.0          # Camera pitch: negative = looking downward
+    roll_deg: 0.0             # Camera roll (degrees)
+    fov_h_deg: 70.0           # Horizontal field of view (degrees)
+    fov_v_deg: 0.0            # Vertical FOV (0 = auto-derived from aspect ratio)
+    reference_size: [1280, 720]  # Resolution at which FOV values were measured
+  target_altitude_amsl_m: 0.0 # Assumed target (drone) altitude above mean sea level
+  show_on_screen: true        # Display Lat/Lon below bounding box labels
